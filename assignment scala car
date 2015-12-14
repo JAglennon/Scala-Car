@@ -1,0 +1,219 @@
+abstract class FuelGauge(initialFuel:Int) {
+  var Fuel = initialFuel
+  //Max fuel amount allowed
+  protected var MAX_AMOUNT = 15
+  //Class constrains
+  require(Fuel <= MAX_AMOUNT)
+  def CurrentFuel() : Int = {
+    Fuel
+  }
+  //Method to show the current amount of fuel
+  def reportFuel() : String
+  //Method to increment by 1 gallon the amount of fuel
+  def incrementFuel() = {
+    if(Fuel < MAX_AMOUNT)
+      Fuel+=1
+  }
+  //Decrease the Fuel
+  def decrementFuel() = {
+    if(Fuel > 0) {
+      Fuel-=1
+    }
+    if(Fuel <= 3){
+      println("WARNING FUEL LEVEL LOW ")
+    }
+  }
+}
+class AnalogFuelGauge(initialFuel: Int) extends FuelGauge(initialFuel){
+  //needed toString to overcome the memory address print out issue
+  override def toString = {
+    "initial Fuel amount " + initialFuel
+  }
+  override def reportFuel() : String = {
+    if(Fuel == 15) {
+      "Tank is FULL"
+    } else if(Fuel >=12 && Fuel <= 14) {
+      "Tank is 3/4 Full"
+    } else if(Fuel >=8 && Fuel <= 11) {
+      "Tank is 1/2 Full"
+    } else if(Fuel >=4 && Fuel <= 7) {
+      "Tank is 1/4 Full"
+    } else {
+      "Tank is EMPTY"
+    }
+  }
+}
+
+class ElectricFuelGauge(initialFuel: Int) extends FuelGauge(initialFuel) {
+  //needed toString to overcome the memory address print out issue
+  override def toString = {
+    "initial Fuel amount " + initialFuel
+  }
+  override def reportFuel(): String = {
+    if (Fuel == MAX_AMOUNT) {
+      "Tank is FULL"
+    } else {
+      "Tank has: " + this.Fuel.toString() + " Gallons"
+    }
+  }
+}
+
+abstract class Odometer() {
+  override def toString = {
+    "Mileage " + mileage;
+  }
+  var MAX_MILEAGE = 999999
+  var EMPTY = 0
+
+
+  //The Mileage
+  var mileage = 0
+
+  //Method reports current car mileage
+  def reportMileage() : String
+
+  def incrementMileage() = {
+    if(mileage<MAX_MILEAGE) {
+      this.mileage +=24
+      println("Increase Mileage:" + mileage.toString())
+
+    } else {
+      if(this.mileage == MAX_MILEAGE) {
+        this.mileage = 0
+      }
+    }
+  }
+
+  def manualMileageReset() = {
+    this.mileage = EMPTY
+  }
+
+  def decreaseFuel(fuelGauge: FuelGauge) = {
+    fuelGauge.decrementFuel()
+  }
+}
+
+class MechanicalOdometer extends Odometer {
+  //reports current car mileage
+  override def reportMileage() : String  = {
+    "Mileage: " + this.mileage.toString
+  }
+}
+class ElectricOdometer extends Odometer {
+  //reports current car mileage ELECTRIC CAR GETS MORE MILES TO THE GALLON!!!
+  override def incrementMileage() = {
+    if (mileage < MAX_MILEAGE) {
+      this.mileage += 27
+    }
+  }
+  override def reportMileage() : String = {
+    "e car Mileage is: " + this.mileage.toString
+  }
+}
+
+abstract class Car(odometer: Odometer, fuelGauge: FuelGauge) {
+  //Class properties below represent Car parts
+  protected var carOdometer = odometer
+  protected var carFuelGauge = fuelGauge
+  // Method to accelerate the vehicle
+  def move() = {
+    var mileageCounter = 0
+    var i = 0
+    for (i <- 1 to 10) {
+      carOdometer.incrementMileage()
+      mileageCounter+=1
+      print(carOdometer.reportMileage)
+      println()
+      print(carFuelGauge.reportFuel())
+      println()
+      if(mileageCounter == 3) {
+        println("Decreasing Fuel")
+        carOdometer.decreaseFuel(carFuelGauge)
+        mileageCounter = 0
+      }
+    }
+  }
+  def showMileage() = {
+    carOdometer.reportMileage()
+  }
+}
+
+class AnalogCar(fuelAmount: Int) extends Car(new MechanicalOdometer, new AnalogFuelGauge(fuelAmount)) {
+
+  var carFuelAmount = fuelAmount
+
+  this.carOdometer = new MechanicalOdometer()
+  this.carFuelGauge = new AnalogFuelGauge(carFuelAmount)
+
+  override def toString:String = {
+    this.carFuelGauge.toString
+
+  }
+}
+
+class ElectricCar(fuelAmount : Int) extends Car(new ElectricOdometer, new ElectricFuelGauge(fuelAmount)) {
+
+  var carFuelAmount = fuelAmount
+
+  this.carOdometer = new ElectricOdometer()
+  this.carFuelGauge = new ElectricFuelGauge(carFuelAmount)
+
+  override def toString: String = {
+    this.carFuelGauge.toString
+  }
+}
+//Class represents a driver with a car (any type)
+class Driver(car: Car) {
+
+  var newCar = car
+
+  // Method to drive the car
+
+  def move = {
+    newCar.move()
+  }
+
+  //ability to drive a different car
+  def changeCar(anotherCar: Car) = {
+    this.newCar = anotherCar
+  }
+}
+//TESTING interactive classes!
+var odometer = new MechanicalOdometer()
+var analogFuelGauge = new AnalogFuelGauge(15)
+var mCounter = 0
+var j = 0
+for (j <- 1 to 10) {
+  odometer.incrementMileage()
+  mCounter+=1
+  println("Current Mileage: " + odometer.reportMileage)
+  println("Current Fuel Amount: " + analogFuelGauge.reportFuel())
+  println()
+  if(mCounter == 3) {
+    println("Decreasing Fuel")
+    odometer.decreaseFuel(analogFuelGauge)
+    mCounter = 0
+  }
+}
+// TESTING CARS AND DRIVERS ODOMETERS AND FUEL GAUGES
+var analogCar = new AnalogCar(12)
+analogCar.showMileage()
+def driver1 = new Driver(analogCar)
+driver1.move
+var electricCar = new ElectricCar(15)
+def driver2 = new Driver(electricCar)
+driver2.move
+analogCar.showMileage()
+electricCar.showMileage()
+
+driver1.changeCar(electricCar)
+driver1.move
+
+driver2.changeCar(electricCar)
+driver2.move
+
+def driver3 = new Driver(electricCar)
+driver3.move
+driver3.move
+analogCar.showMileage()
+electricCar.showMileage()
